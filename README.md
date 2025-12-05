@@ -170,7 +170,7 @@ FUSE currently shows how to read from a queue (not a topic).
 `org.galatea.starter.entrypoint.SettlementJmsListener` - shows how you listen for messages. Supports both JSON and Protobuf message formats.
 `org.galatea.starter.utils.jms.FuseJmsListenerContainerFactory` - provides a custom "listener container" factory (which is a spring jms concept).  We use our own factory, so we can create our own "listener container".
 `org.galatea.starter.utils.jms.FuseMessageListenerContainer` - is a custom listener container.  This is the code that will actually call the JMS listener that you have registered.  You'll notice that we populate our trace repository here.  This allows us to capture every message we process and the resulting outcome.  
-`org.galatea.starter.JmsConfig` - is the spring java config related to jms
+`org.galatea.starter.config.JmsConfig` - is the spring java config related to jms
 `org.galatea.starter.entrypoint.SettlementJmsListenerTest` - shows you how to test a jms listener.  SpringBoot fires up an embedded ActiveMQ broker for the test.  It's important to look at the mentiod annotated with @After in ASpringTest.  You'll see that we tear down the jms connection after each test to ensure isolation between tests.  This is important.
 
 ## JPA
@@ -246,3 +246,22 @@ Once the application is opened in VisualVM there are several tabs filled with di
     - To install go to Tools -> Plugins, then select the Available Plugins tab. Find "Threads Inspector" in the list of plugins and click install.
 * Sampler - Gives the option to see a more detailed view of CPU and memory usage by the app including a by thread breakdown
 * Profiler - Allows enabling CPU or memory profiling and viewing the results.
+
+## Native Image Configuration
+
+### Build Commands
+
+#### Local Native Compilation (requires GraalVM installed)
+```bash
+mvn -Pnative native:compile
+```
+
+#### Container-based Native Image (no local GraalVM needed)
+```bash
+mvn -Pnative spring-boot:build-image
+```
+
+#### Run the container
+```bash
+docker run -p 8080:8080 fuse-starter-java:0.0.1-SNAPSHOT
+```

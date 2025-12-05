@@ -1,13 +1,16 @@
-package org.galatea.starter;
+package org.galatea.starter.config;
 
+import jakarta.jms.ConnectionFactory;
+import jakarta.jms.Message;
 import java.util.function.BiConsumer;
-import javax.jms.ConnectionFactory;
-import javax.jms.Message;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.activemq.broker.BrokerService;
+import org.galatea.starter.config.graalvm.JmsRuntimeHints;
 import org.galatea.starter.utils.jms.FuseJmsListenerContainerFactory;
 import org.springframework.boot.autoconfigure.jms.DefaultJmsListenerContainerFactoryConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportRuntimeHints;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListenerConfigurer;
 import org.springframework.jms.config.JmsListenerContainerFactory;
@@ -19,6 +22,7 @@ import org.springframework.messaging.handler.annotation.support.DefaultMessageHa
 import org.springframework.messaging.handler.annotation.support.MessageHandlerMethodFactory;
 
 @Slf4j
+@ImportRuntimeHints(JmsRuntimeHints.class)
 @Configuration
 @EnableJms
 public class JmsConfig implements JmsListenerConfigurer {
@@ -41,12 +45,12 @@ public class JmsConfig implements JmsListenerConfigurer {
   }
 
   /**
-   * We provide our own listener container factory since we want to use our own implementation of a
-   * listener container which adds tracing of how the message is handled. We also manually set the
-   * message converter to ensure that it is using the correct message format.
+   * We provide our own listener container factory since we want to use our own implementation of a listener container
+   * which adds tracing of how the message is handled. We also manually set the message converter to ensure that it is
+   * using the correct message format.
    *
    * @param queueConnectionFactory injected by spring
-   * @param configurer injected by spring
+   * @param configurer             injected by spring
    * @return the factory.
    */
   @Bean
@@ -70,10 +74,9 @@ public class JmsConfig implements JmsListenerConfigurer {
   }
 
   /**
-   * For JSON messages we want to use the spring messaging converter instead of the spring jms
-   * converter. The spring jms converter expects the type of object to deserialize the json to being
-   * specified in the message itself, while the spring messaging converter will do what you expect
-   * and convert to the type of the input parameter in the listener.
+   * For JSON messages we want to use the spring messaging converter instead of the spring jms converter. The spring jms
+   * converter expects the type of object to deserialize the json to being specified in the message itself, while the
+   * spring messaging converter will do what you expect and convert to the type of the input parameter in the listener.
    *
    * <p>In order to use a spring messaging converter we have to implement JmsListenerConfigurer and
    * set the custom MessageHandlerMethodFactory.
@@ -91,8 +94,23 @@ public class JmsConfig implements JmsListenerConfigurer {
   }
 
   /**
-   * This sets the custom MessageHandlerMethodFactory for the listener registrar for the connection
-   * factory that we've set up for JSON.
+   * Sets up an embedded ActiveMQ broker while disabling jmx.
+   *
+   * @return the broker service
+   * @throws Exception if the broker cannot be created
+   */
+  @Bean
+  public BrokerService broker() throws Exception {
+    BrokerService broker = new BrokerService();
+    broker.setUseJmx(false);
+    broker.setPersistent(false);
+    broker.addConnector("vm://localhost");
+    return broker;
+  }
+
+  /**
+   * This sets the custom MessageHandlerMethodFactory for the listener registrar for the connection factory that we've
+   * set up for JSON.
    */
   @Override
   public void configureJmsListeners(final JmsListenerEndpointRegistrar registrar) {
